@@ -44,34 +44,111 @@ unsigned char* loadPixels(QString input, int &width, int &height);
 bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida);
 unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
 
-unsigned char desplazamientoIzq(unsigned char byte, int n);
-unsigned char desplazamientoDer(unsigned char byte, int n);
-unsigned char rotacionIzq(unsigned char byte, int n);
-unsigned char rotacionDer(unsigned char byte, int n);
-unsigned char operacionXor(unsigned char byte, unsigned char byteMascara);
+unsigned char desplazamientoIzq(unsigned char Id, int n);
+unsigned char desplazamientoDer(unsigned char Id, int n);
+unsigned char rotacionIzq(unsigned char Id, int n);
+unsigned char rotacionDer(unsigned char Id, int n);
+unsigned char operacionXor(unsigned char Id, unsigned char IM);
+unsigned char* revertirEnmas(unsigned int* Id, unsigned char* M, int i, int j);
 
 
 /* ******************************** Función Principal ************************************ */
 
 int main()
 {
-    // Definición de rutas de archivo de entrada (imagen original) y salida (imagen modificada)
+    /* Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
     QString archivoEntrada = "I_O.bmp";
     QString archivoSalida = "I_D.bmp";
+    QString Imascara = "I_M.bmp";
+    QString mascara = "M.bmp";
+    QString etapa = "P2.bmp";
 
-    // Variables para almacenar las dimensiones de la imagen
+
+    // Variables para almacenar las dimensiones de la imagen, de la máscara máscara y de la máscara
     int height = 0;
     int width = 0;
 
-    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
-    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+    int hIm=0;
+    int wIm=0;
 
-    // Simula una modificación de la imagen asignando valores RGB incrementales
+    int hm=0;
+    int wm=0;
+
+    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
+    //unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+    unsigned char *pixelData = loadPixels(etapa, width, height);
+
+    // Carga la imagen máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *ImaskData = loadPixels(Imascara, wIm, hIm);
+
+    // Carga la máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *maskData = loadPixels(mascara, wm, hm);
+
+    // Asegurarse que las dimensiones coincidan
+    if (width != wIm || height != hIm) {
+        cout << "Las imágenes no tienen el mismo tamaño." << endl;
+        return -1; //convención para indicar que hay un error
+    }
+
+    /*Simula una modificación de la imagen asignando valores RGB incrementales
     // (Esto es solo un ejemplo de manipulación artificial)
     for (int i = 0; i < width * height * 3; i += 3) {
         pixelData[i] = i;     // Canal rojo
         pixelData[i + 1] = i; // Canal verde
         pixelData[i + 2] = i; // Canal azul
+    }*/
+
+    /* Simula operaciones a nivel de bits
+    int totalSize = width * height * 3;
+    for (int i = 0; i < totalSize; i++) {
+        // XOR con la imagen máscara
+        pixelData[i] = operacionXor(pixelData[i], ImaskData[i]);
+
+        // Rotar a la derecha 3 bits
+        pixelData[i] = rotacionIzq(pixelData[i], 7);
+
+        // Desplazamiento opcional (ejemplo: desplazar 1 bit a la izquierda)
+        pixelData[i] = desplazamientoIzq(pixelData[i],3); // cuidado: puede perder información
+    }*/
+
+    // Exporta la imagen modificada a un nuevo archivo BMP
+    //bool exportI = exportImage(pixelData, width, height, archivoSalida);
+
+    // Muestra si la exportación fue exitosa (true o false)
+    //cout << exportI << endl;
+
+    /* Libera la memoria usada para los píxeles
+    delete[] pixelData;
+    pixelData = nullptr;*/
+
+    /* Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+    int seed = 0;
+    int n_pixels = 0;
+
+    // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+    unsigned int *maskingData = loadSeedMasking("M2.txt", seed, n_pixels);
+
+    // Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+    for (int i = 0; i < n_pixels * 3; i += 3) {
+        cout << "Pixel " << i / 3 << ": ("
+             << maskingData[i] << ", "
+             << maskingData[i + 1] << ", "
+             << maskingData[i + 2] << ")" << endl;
+    }
+
+    // Revertir enmascaramiento
+    unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
+
+    for (int i=0; i <hm*wm*3; i++) {
+
+        if(i+seed>height*width){
+            cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
+            break;
+        }
+        else{
+            pixelData[i+seed] = original[i];
+        }
+
     }
 
     // Exporta la imagen modificada a un nuevo archivo BMP
@@ -80,9 +157,103 @@ int main()
     // Muestra si la exportación fue exitosa (true o false)
     cout << exportI << endl;
 
-    // Libera la memoria usada para los píxeles
+    // Libera la memoria usada para los datos de enmascaramiento
+    if (maskingData != nullptr){
+        delete[] maskingData;
+        maskingData = nullptr;
+    }
+
     delete[] pixelData;
-    pixelData = nullptr;
+    pixelData = nullptr;*/
+
+
+
+    /* ******************************** Set de prueba para el caso 1 ****************************** */
+
+    // Segunda etapa
+
+    QString archivoEntrada = "I_O.bmp";
+    //QString archivoSalida = "Etapa2.bmp";
+    QString Imascara = "I_M.bmp";
+    QString mascara = "M.bmp";
+    QString etapa2 = "P2.bmp";
+
+    // Variables para almacenar las dimensiones de la imagen, de la máscara máscara y de la máscara
+    int height = 0;
+    int width = 0;
+
+    int hIm=0;
+    int wIm=0;
+
+    int hm=0;
+    int wm=0;
+
+    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
+    //unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+    //unsigned char *pixelData = loadPixels(etapa2, width, height);
+
+    // Carga la imagen máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *ImaskData = loadPixels(Imascara, wIm, hIm);
+
+    // Carga la máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *maskData = loadPixels(mascara, wm, hm);
+
+    /* Asegurarse que las dimensiones coincidan
+    if (width != wIm || height != hIm) {
+        cout << "Las imágenes no tienen el mismo tamaño." << endl;
+        return -1; //convención para indicar que hay un error
+    }*/
+
+    /* Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+    int seed = 0;
+    int n_pixels = 0;
+
+    // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+    unsigned int *maskingData = loadSeedMasking("M2.txt", seed, n_pixels);
+
+    // Revertir enmascaramiento
+    unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
+
+    for (int i=0; i <hm*wm*3; i++) {
+
+        if(i+seed>height*width){
+            cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
+            break;
+        }
+        else{
+            pixelData[i+seed] = original[i];
+        }
+
+    }
+
+    //  Simula operaciones a nivel de bits
+    int totalSize = width * height * 3;
+    for (int i = 0; i < totalSize; i++) {
+        // XOR con la imagen máscara
+        //pixelData[i] = operacionXor(pixelData[i], ImaskData[i]);
+
+        // Rotar a la derecha 3 bits
+        pixelData[i] = rotacionIzq(pixelData[i], 3);
+
+        // Desplazamiento opcional (ejemplo: desplazar 1 bit a la izquierda)
+        //pixelData[i] = desplazamientoIzq(pixelData[i],3); // cuidado: puede perder información
+    }*/
+
+    /*Exporta la imagen modificada a un nuevo archivo BMP
+        bool exportI = exportImage(pixelData2, width, height, archivoSalida);
+
+    // Muestra si la exportación fue exitosa (true o false)
+    cout << exportI << endl;*/
+
+    // Primera etapa
+
+    //QString archivoEntrada = "I_O.bmp";
+    QString archivoSalida = "Etapa1.bmp";
+    //QString Imascara = "I_M.bmp";
+    //QString mascara = "M.bmp";
+    QString etapa1 = "Etapa2.bmp";
+
+    unsigned char *pixelData = loadPixels(etapa1, width, height);
 
     // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
     int seed = 0;
@@ -91,19 +262,49 @@ int main()
     // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
     unsigned int *maskingData = loadSeedMasking("M1.txt", seed, n_pixels);
 
-    // Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
-    for (int i = 0; i < n_pixels * 3; i += 3) {
-        cout << "Pixel " << i / 3 << ": ("
-             << maskingData[i] << ", "
-             << maskingData[i + 1] << ", "
-             << maskingData[i + 2] << ")" << endl;
-    }      
+    // Revertir enmascaramiento
+    unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
+
+    for (int i=0; i <hm*wm*3; i++) {
+
+        if(i+seed>height*width){
+            cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
+            break;
+        }
+        else{
+            pixelData[i+seed] = original[i];
+        }
+
+    }
+
+    //  Simula operaciones a nivel de bits
+    int totalSize = width * height * 3;
+    for (int i = 0; i < totalSize; i++) {
+        // XOR con la imagen máscara
+        pixelData[i] = operacionXor(pixelData[i], ImaskData[i]);
+
+        // Rotar a la derecha 3 bits
+        //pixelData[i] = rotacionIzq(pixelData[i], 3);
+
+        // Desplazamiento opcional (ejemplo: desplazar 1 bit a la izquierda)
+        //pixelData[i] = desplazamientoIzq(pixelData[i],3); // cuidado: puede perder información
+    }
+
+    // Exporta la imagen modificada a un nuevo archivo BMP
+    bool exportI = exportImage(pixelData, width, height, archivoSalida);
+
+    // Muestra si la exportación fue exitosa (true o false)
+    cout << exportI << endl;
 
     // Libera la memoria usada para los datos de enmascaramiento
     if (maskingData != nullptr){
         delete[] maskingData;
         maskingData = nullptr;
     }
+
+    delete[] pixelData;
+    pixelData = nullptr;
+
 
     return 0; // Fin del programa
 }
@@ -291,33 +492,54 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
     return RGB;
 }
 
-unsigned char desplazamientoIzq(unsigned char byte, int n){
+unsigned char desplazamientoIzq(unsigned char Id, int n){
 
-    return byte << n;
-
-}
-
-unsigned char desplazamientoDer(unsigned char byte, int n){
-
-    return byte >> n;
+    return Id << n;
 
 }
 
-unsigned char rotacionIzq(unsigned char byte, int n){
+unsigned char desplazamientoDer(unsigned char Id, int n){
 
-    return (byte << n) | (byte >> (8 - n));
-
-}
-
-unsigned char rotacionDer(unsigned char byte, int n){
-
-    return (byte >> n) | (byte << (8 - n));
+    return Id >> n;
 
 }
 
-unsigned char operacionXor(unsigned char byte, unsigned char byteMascara){
+unsigned char rotacionIzq(unsigned char Id, int n){
 
-    return byte ^ byteMascara;
+    return (Id << n) | (Id >> (8 - n));
+
+}
+
+unsigned char rotacionDer(unsigned char Id, int n){
+
+    return (Id >> n) | (Id << (8 - n));
+
+}
+
+unsigned char operacionXor(unsigned char Id, unsigned char IM){
+
+    return Id ^ IM;
+
+}
+
+unsigned char* revertirEnmas(unsigned int* sumaRGB, unsigned char* M, int i, int j){
+
+    unsigned char* original = new unsigned char[i*j*3];
+
+
+    for (int k=0;k<(i*j*3);k++){
+
+        int valor=(int)sumaRGB[k]-(int)M[k];
+
+        if (valor < 0){
+            valor += 256;  // Evitar desbordamiento negativo
+        }
+
+        original[k] = (unsigned char)(valor);
+
+    }
+
+    return original;
 
 }
 
