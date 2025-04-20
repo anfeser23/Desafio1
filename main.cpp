@@ -350,7 +350,7 @@ int main()
     // Etapa 6
 
     // Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
-    QString archivoEntrada = "P6.bmp";
+    QString archivoEntrada = "p6.bmp";
     QString archivoSalida = "Etapa6.bmp";
     QString Imascara = "I_M.bmp";
     QString mascara = "M.bmp";
