@@ -50,6 +50,7 @@ unsigned char rotacionIzq(unsigned char Id, int n);
 unsigned char rotacionDer(unsigned char Id, int n);
 unsigned char operacionXor(unsigned char Id, unsigned char IM);
 unsigned char* revertirEnmas(unsigned int* Id, unsigned char* M, int i, int j);
+void enmascaramiento(unsigned char* Id, int wId, int hId, unsigned char* M, int wM, int hM, int s);
 
 
 /* ******************************** Función Principal ************************************ */
@@ -64,7 +65,7 @@ int main()
     QString etapa = "P2.bmp";
 
 
-    // Variables para almacenar las dimensiones de la imagen, de la máscara máscara y de la máscara
+    // Variables para almacenar las dimensiones de la imagen, de la imagen máscara y de la máscara
     int height = 0;
     int width = 0;
 
@@ -86,7 +87,7 @@ int main()
 
     // Asegurarse que las dimensiones coincidan
     if (width != wIm || height != hIm) {
-        cout << "Las imágenes no tienen el mismo tamaño." << endl;
+        cout << "Las imagenes no tienen el mismo tamaño." << endl;
         return -1; //convención para indicar que hay un error
     }
 
@@ -170,15 +171,15 @@ int main()
 
     /* ******************************** Set de prueba para el caso 1 ****************************** */
 
-    // Segunda etapa
+    /* Segunda etapa
 
-    QString archivoEntrada = "I_O.bmp";
+    //QString archivoEntrada = "I_O.bmp";
     //QString archivoSalida = "Etapa2.bmp";
     QString Imascara = "I_M.bmp";
     QString mascara = "M.bmp";
     QString etapa2 = "P2.bmp";
 
-    // Variables para almacenar las dimensiones de la imagen, de la máscara máscara y de la máscara
+    // Variables para almacenar las dimensiones de la imagen, de la imagen máscara y de la máscara
     int height = 0;
     int width = 0;
 
@@ -245,7 +246,8 @@ int main()
     // Muestra si la exportación fue exitosa (true o false)
     cout << exportI << endl;*/
 
-    // Primera etapa
+
+    /* Primera etapa
 
     //QString archivoEntrada = "I_O.bmp";
     QString archivoSalida = "Etapa1.bmp";
@@ -303,7 +305,444 @@ int main()
     }
 
     delete[] pixelData;
+    pixelData = nullptr;*/
+
+
+
+    /* ******************************** Set de prueba para el caso 2 **************************** */
+
+
+    // Etapa 6
+
+    // Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
+    QString archivoEntrada = "P1.bmp";
+    QString archivoSalida = "Etapa2.bmp";
+    QString Imascara = "I_M.bmp";
+    QString mascara = "M.bmp";
+    //QString etapa = "P2.bmp";
+
+
+    // Variables para almacenar las dimensiones de la imagen, de la imagen máscara y de la máscara
+    int height = 0;
+    int width = 0;
+
+    int hIm=0;
+    int wIm=0;
+
+    int hm=0;
+    int wm=0;
+
+    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
+    //unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+
+    // Carga la imagen máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *ImaskData = loadPixels(Imascara, wIm, hIm);
+
+    // Carga la máscara BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *maskData = loadPixels(mascara, wm, hm);
+
+    // Asegurarse que las dimensiones coincidan
+    if (width != wIm || height != hIm) {
+        cout << "Las imagenes no tienen el mismo tamaño." << endl;
+        return -1; //convención para indicar que hay un error
+    }
+
+    // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+    int seed = 0;
+    int n_pixels = 0;
+
+    // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+    unsigned int *maskingData = loadSeedMasking("M2.txt", seed, n_pixels);
+
+    /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+    for (int i = 0; i < n_pixels * 3; i += 3) {
+        cout << "Pixel " << i / 3 << ": ("
+             << maskingData[i] << ", "
+             << maskingData[i + 1] << ", "
+             << maskingData[i + 2] << ")" << endl;
+    }*/
+
+    /* Revertir enmascaramiento
+    unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
+
+    for (int i=0; i <hm*wm*3; i++) {
+
+        if(i+seed>height*width){
+            cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
+            break;
+        }
+        else{
+            pixelData[i+seed] = original[i];
+        }
+
+    }*/
+
+    /* Exporta la imagen modificada a un nuevo archivo BMP
+    bool exportI = exportImage(pixelData, width, height, archivoSalida);
+
+    // Muestra si la exportación fue exitosa (true o false)
+    cout << exportI << endl;*/
+
+    /*QString archivodeSalida = "Etapa6.bmp";
+
+    int hvalidacion = 0;
+    int wvalidacion = 0;
+
+    unsigned char *validacData = loadPixels(archivodeSalida, wvalidacion, hvalidacion);*/
+
+    // Algoritmo para identificar operaciones a nivel de bit y verificar enmascaramiento
+
+    bool validacion=true;
+    int totalSize = width*height* 3;
+
+    // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+    int seed1 = 0;
+    int n_pixels1 = 0;
+
+    // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+    unsigned int *maskingData1 = loadSeedMasking("M5.txt", seed1, n_pixels1);
+    //do{
+
+
+
+    /* *************************** Operación XOR ***************************** */
+
+
+
+    for (int i = 0; i < totalSize; i++) {
+
+        //XOR con la imagen máscara
+        pixelData[i] = operacionXor(pixelData[i], ImaskData[i]);
+
+    }
+
+    enmascaramiento(pixelData, width, height, maskData, wm,hm,seed);
+
+    int n_pixels2=0;
+
+    unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed, n_pixels2);
+
+    if (n_pixels2!=n_pixels){
+
+        cout<<endl<<"No es operacion XOR"<<endl;
+        validacion=false;
+    }
+
+    else{
+
+        /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+            for (int i = 0; i < n_pixels2 * 3; i += 3) {
+                cout << "Pixel " << i / 3 << ": ("
+                     << validacionData[i] << ", "
+                     << validacionData[i + 1] << ", "
+                     << validacionData[i + 2] << ")" << endl;
+            }*/
+
+        for (int k = 0; k < n_pixels2*3; k+=3) {
+
+            if ((validacionData[k]!=maskingData1[k]) && (validacionData[k+1]!=maskingData1[k+1]) && (validacionData[k+2]!=maskingData1[k+2])){
+
+                validacion=false;
+                unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+
+                break;
+
+            }
+
+            else{
+
+                validacion=true;
+
+            }
+
+        }
+
+    }
+
+
+
+    /* ***************************** Rotación a la derecha ******************************* */
+
+
+
+    for (int j=1;j<9;j++){
+
+        for (int i = 0; i < totalSize; i++) {
+
+            // Original rotar a la derecha
+            pixelData[i] = rotacionIzq(pixelData[i], j);
+        }
+
+        enmascaramiento(pixelData, width, height, maskData, wm,hm,seed);
+
+        int n_pixels2=0;
+
+        unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed, n_pixels2);
+
+        if (n_pixels2!=n_pixels){
+
+            cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits"<<endl;
+            validacion=false;
+        }
+
+        else{
+
+            /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+            for (int i = 0; i < n_pixels2 * 3; i += 3) {
+                cout << "Pixel " << i / 3 << ": ("
+                     << validacionData[i] << ", "
+                     << validacionData[i + 1] << ", "
+                     << validacionData[i + 2] << ")" << endl;
+            }*/
+
+            for (int k = 0; k < n_pixels2*3; k+=3) {
+
+                if ((validacionData[k]!=maskingData1[k]) && (validacionData[k+1]!=maskingData1[k+1]) && (validacionData[k+2]!=maskingData1[k+2])){
+
+                    validacion=false;
+                    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+                    cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits"<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    validacion=true;
+                    cout<<endl<<"Es operacion rotacion a la derecha de "<<j<<"bits"<<endl;
+
+
+                }
+
+            }
+
+
+
+        }
+
+        cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
+    }
+
+
+
+    /* ******************************** Rotación a la iquierda ************************ */
+
+
+
+    for (int j=1;j<9;j++){
+
+        for (int i = 0; i < totalSize; i++) {
+
+            // Original rotar a la izquierda
+            pixelData[i] = rotacionDer(pixelData[i], j);
+        }
+
+        enmascaramiento(pixelData, width, height, maskData, wm,hm,seed);
+
+        int n_pixels2=0;
+
+        unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed, n_pixels2);
+
+        if (n_pixels2!=n_pixels){
+
+            cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits"<<endl;
+            validacion=false;
+        }
+
+        else{
+
+            /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+            for (int i = 0; i < n_pixels2 * 3; i += 3) {
+                cout << "Pixel " << i / 3 << ": ("
+                     << validacionData[i] << ", "
+                     << validacionData[i + 1] << ", "
+                     << validacionData[i + 2] << ")" << endl;
+            }*/
+
+            for (int k = 0; k < n_pixels2*3; k+=3) {
+
+                if ((validacionData[k]!=maskingData1[k]) && (validacionData[k+1]!=maskingData1[k+1]) && (validacionData[k+2]!=maskingData1[k+2])){
+
+                    validacion=false;
+                    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+                    cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits"<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    validacion=true;
+                    cout<<endl<<"Es operacion rotacion a la izquierda de "<<j<<"bits"<<endl;
+
+
+                }
+
+            }
+
+
+        }
+
+        cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
+    }
+
+
+
+    // Desplazamiento a la derecha
+
+
+
+    for (int j=1;j<9;j++){
+
+        for (int i = 0; i < totalSize; i++) {
+
+            // Original rotar a la derecha
+            pixelData[i] = desplazamientoIzq(pixelData[i], j);
+        }
+
+        enmascaramiento(pixelData, width, height, maskData, wm,hm,seed);
+
+        int n_pixels2=0;
+
+        unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed, n_pixels2);
+
+        if (n_pixels2!=n_pixels){
+
+            cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits"<<endl;
+            validacion=false;
+        }
+
+        else{
+
+            /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+            for (int i = 0; i < n_pixels2 * 3; i += 3) {
+                cout << "Pixel " << i / 3 << ": ("
+                     << validacionData[i] << ", "
+                     << validacionData[i + 1] << ", "
+                     << validacionData[i + 2] << ")" << endl;
+            }*/
+
+            for (int k = 0; k < n_pixels2*3; k+=3) {
+
+                if ((validacionData[k]!=maskingData1[k]) && (validacionData[k+1]!=maskingData1[k+1]) && (validacionData[k+2]!=maskingData1[k+2])){
+
+                    validacion=false;
+                    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+                    cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits"<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    validacion=true;
+                    cout<<endl<<"Es operacion desplazamiento a la derecha de "<<j<<"bits"<<endl;
+
+
+                }
+
+            }
+
+
+
+        }
+
+        cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
+    }
+
+
+
+    // Desplazamiento a la iquierda
+
+
+
+    for (int j=1;j<9;j++){
+
+        for (int i = 0; i < totalSize; i++) {
+
+            // Original rotar a la izquierda
+            pixelData[i] = rotacionDer(pixelData[i], j);
+        }
+
+        enmascaramiento(pixelData, width, height, maskData, wm,hm,seed);
+
+        int n_pixels2=0;
+
+        unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed, n_pixels2);
+
+        if (n_pixels2!=n_pixels){
+
+            cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits"<<endl;
+            validacion=false;
+        }
+
+        else{
+
+            /* Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
+            for (int i = 0; i < n_pixels2 * 3; i += 3) {
+                cout << "Pixel " << i / 3 << ": ("
+                     << validacionData[i] << ", "
+                     << validacionData[i + 1] << ", "
+                     << validacionData[i + 2] << ")" << endl;
+            }*/
+
+            for (int k = 0; k < n_pixels2*3; k+=3) {
+
+                if ((validacionData[k]!=maskingData1[k]) && (validacionData[k+1]!=maskingData1[k+1]) && (validacionData[k+2]!=maskingData1[k+2])){
+
+                    validacion=false;
+                    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+                    cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits"<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    validacion=true;
+                    cout<<endl<<"Es operacion desplazamiento a la izquierda de "<<j<<"bits"<<endl;
+
+
+                }
+
+            }
+
+
+        }
+
+        cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
+    }
+
+
+
+
+
+
+
+
+
+    // }
+
+    //while(validacion==false);
+
+
+    if (maskingData != nullptr){
+        delete[] maskingData;
+        maskingData = nullptr;
+    }
+
+    delete[] pixelData;
     pixelData = nullptr;
+
 
 
     return 0; // Fin del programa
@@ -313,7 +752,7 @@ int main()
 /* ******************************** Funiciones ************************************** */
 
 unsigned char* loadPixels(QString input, int &width, int &height){
-/*
+    /*
  * @brief Carga una imagen BMP desde un archivo y extrae los datos de píxeles en formato RGB.
  *
  * Esta función utiliza la clase QImage de Qt para abrir una imagen en formato BMP, convertirla al
@@ -373,7 +812,7 @@ unsigned char* loadPixels(QString input, int &width, int &height){
 }
 
 bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida){
-/*
+    /*
  * @brief Exporta una imagen en formato BMP a partir de un arreglo de píxeles en formato RGB.
  *
  * Esta función crea una imagen de tipo QImage utilizando los datos contenidos en el arreglo dinámico
@@ -418,7 +857,7 @@ bool exportImage(unsigned char* pixelData, int width,int height, QString archivo
 }
 
 unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels){
-/*
+    /*
  * @brief Carga la semilla y los resultados del enmascaramiento desde un archivo de texto.
  *
  * Esta función abre un archivo de texto que contiene una semilla en la primera línea y,
@@ -543,6 +982,40 @@ unsigned char* revertirEnmas(unsigned int* sumaRGB, unsigned char* M, int i, int
 
 }
 
+void enmascaramiento(unsigned char* Id, int wId, int hId, unsigned char* M, int wM, int hM, int s){
+
+    int totalId=wId*hId*3;
+    int totalM=wM*hM*3;
+
+    // Validar tamaños
+    if (totalId < totalM) {
+        cout << "Error: La imagen ID es más pequeña que la máscara M." << endl;
+        return;
+    }
+
+    // Abrir archivo para guardar salida
+    ofstream archivo("Validacion.txt");
+    if (!archivo.is_open()) {
+        cout << "No se pudo abrir el archivo de salida." << endl;
+        return;
+    }
+
+    // Escribir la semilla en la primera línea
+    archivo << s << endl;
+
+    // Calcular y guardar las sumas S(k) = ID(k + s) + M(k)
+    for (int k = 0; k < totalM; k += 3) {
+        int r = (int)Id[s + k]     +(int)M[k];
+        int g = (int)Id[s + k + 1] + (int)M[k + 1];
+        int b = (int)Id[s + k + 2] + (int)M[k + 2];
+
+        archivo << r << " " << g << " " << b << endl;
+    }
+
+    archivo.close();
+    cout << "Enmascaramiento completado. Archivo guardado: " << "Validacion.txt"<< endl;
+
+}
 
 
 
