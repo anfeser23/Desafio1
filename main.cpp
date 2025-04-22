@@ -47,11 +47,11 @@ void enmascaramiento(unsigned char* Id, int wId, int hId, unsigned char* M, int 
 /* ********************************************* Función Principal ************************************************ */
 
 int main()
-{       
+{
     // Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
 
-    QString archivosEntradaBMP [6]={"P1.bmp","P2.bmp","P3.bmp","P4.bmp","P5.bmp","P6.bmp"};
-    QString archivosSalidaBMP [6]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp"};
+    QString archivosEntradaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","I_D"};
+    QString archivosSalidaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","Etapa7.bmp"};
     const char* archivosTXT [7]={"M0.txt","M1.txt","M2.txt","M3.txt","M4.txt","M5.txt","M6.txt"};
     QString Imascara = "I_M.bmp";
     QString mascara = "M.bmp";
@@ -71,7 +71,7 @@ int main()
     unsigned char *maskData = loadPixels(mascara, wm, hm);
 
 
-    for (int etapa=5;etapa>=0;etapa--){
+    for (int etapa=6;etapa>=0;etapa--){
 
         // Variables para almacenar las dimensiones de la imagen
         int height = 0;
@@ -87,30 +87,41 @@ int main()
             return -1; //convención para indicar que hay un error
         }
 
-        // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
-        int seed = 0;
-        int n_pixels = 0;
+        if (etapa!=6){
 
-        // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
-        unsigned int *maskingData = loadSeedMasking(archivosTXT[etapa+1], seed, n_pixels);
+            // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+            int seed = 0;
+            int n_pixels = 0;
 
-        // Revertir enmascaramiento
-        unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
+            // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+            unsigned int *maskingData = loadSeedMasking(archivosTXT[etapa+1], seed, n_pixels);
 
-        for (int i=0; i <hm*wm*3; i++) {
+            // Revertir enmascaramiento
+            unsigned char *original=revertirEnmas(maskingData,maskData,hm,wm);
 
-            if(i+seed>height*width){
-                //cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
-                break;
+            for (int i=0; i <hm*wm*3; i++) {
+
+                if(i+seed>height*width){
+                    //cout<<endl<<"La semilla es muy grande posible desbordamiento"<<endl;
+                    break;
+                }
+                else{
+                    pixelData[i+seed] = original[i];
+                }
+
             }
-            else{
-                pixelData[i+seed] = original[i];
+
+            if (maskingData != nullptr){
+                delete[] maskingData;
+                maskingData = nullptr;
             }
+
+            delete [] original;
 
         }
 
         // Exporta la imagen modificada a un nuevo archivo BMP
-        bool exportI = exportImage(pixelData, width, height, archivosSalidaBMP[etapa]);
+        exportImage(pixelData, width, height, archivosSalidaBMP[etapa]);
 
         // Muestra si la exportación fue exitosa (true o false)
         //cout << exportI << endl;
@@ -141,37 +152,130 @@ int main()
 
 
 
-        /* *************************************** Operación XOR *************************************** */
+            /* *************************************** Operación XOR *************************************** */
 
 
 
 
-        for (int i = 0; i < totalSize; i++) {
+            for (int i = 0; i < totalSize; i++) {
 
-            //XOR con la imagen máscara
-            validacData[i] = operacionXor(validacData[i], ImaskData[i]);
+                //XOR con la imagen máscara
+                validacData[i] = operacionXor(validacData[i], ImaskData[i]);
 
-        }
+            }
 
-        enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
+            enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
 
-        int n_pixels2=0;
+            int n_pixels2=0;
 
-        unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
+            unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
 
-        if (n_pixels2!=n_pixels1){
+            if (n_pixels2!=n_pixels1){
 
-            //cout<<endl<<"No es operacion XOR en etapa: "<<etapa+1<<endl;
-            break;
-            validacion=false;
-        }
+                //cout<<endl<<"No es operacion XOR en etapa: "<<etapa+1<<endl;
+                break;
+                validacion=false;
+            }
 
-        else{
+            else{
 
-            for (int k = 0; k < n_pixels2*3; k++) {
+                for (int k = 0; k < n_pixels2*3; k++) {
 
-                if (validacionData[k]!=maskingData1[k]){
+                    if (validacionData[k]!=maskingData1[k]){
+                        validacion=false;
+
+                        break;
+
+                    }
+
+                    else{
+
+                        validacion=true;
+
+
+                    }
+
+                }
+
+            }
+
+            if (validacion==true){
+
+                cout<<endl<<"Es operacion XOR en etapa: "<<etapa+1<<endl;
+                break;
+
+            }
+
+            else{
+
+                //cout<<endl<<"No es operacion XOR en etapa: "<<etapa+1<<endl;
+
+                for (int i = 0; i < totalSize; i++) {
+
+                    //XOR con la imagen máscara para revertir la operación que no es
+                    validacData[i] = operacionXor(validacData[i], ImaskData[i]);
+
+                }
+
+            }
+
+            if (validacionData != nullptr){
+                delete[] validacionData;
+                validacionData = nullptr;
+            }
+
+
+
+
+            /* ********************************************** Rotación a la derecha ********************************************* */
+
+
+
+            for (int j=1;j<9;j++){
+
+                for (int i = 0; i < totalSize; i++) {
+
+                    // Original rotar a la derecha
+                    validacData[i] = rotacionIzq(validacData[i], j);
+                }
+
+                enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
+
+                int n_pixels2=0;
+
+                unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
+
+                if (n_pixels2!=n_pixels1){
+
+                    //cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
                     validacion=false;
+                }
+
+                else{
+
+                    for (int k = 0; k < n_pixels2*3; k++) {
+
+                        if (validacionData[k]!=maskingData1[k]){
+                            validacion=false;
+
+                            break;
+
+                        }
+
+                        else{
+
+                            validacion=true;
+
+                        }
+
+                    }
+
+
+                }
+
+                if (validacion==true){
+
+                    cout<<endl<<"Es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
 
                     break;
 
@@ -179,377 +283,284 @@ int main()
 
                 else{
 
-                    validacion=true;
+                    //cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
 
+                    for (int i = 0; i < totalSize; i++) {
 
-                }
-
-            }
-
-        }
-
-        if (validacion==true){
-
-             cout<<endl<<"Es operacion XOR en etapa: "<<etapa+1<<endl;
-             break;
-
-        }
-
-        else{
-
-            //cout<<endl<<"No es operacion XOR en etapa: "<<etapa+1<<endl;
-
-            for (int i = 0; i < totalSize; i++) {
-
-                //XOR con la imagen máscara para revertir la operación que no es
-                validacData[i] = operacionXor(validacData[i], ImaskData[i]);
-
-            }
-
-        }
-
-        if (validacionData != nullptr){
-            delete[] validacionData;
-            validacionData = nullptr;
-        }
-
-
-
-
-        /* ********************************************** Rotación a la derecha ********************************************* */
-
-
-
-        for (int j=1;j<9;j++){
-
-            for (int i = 0; i < totalSize; i++) {
-
-                // Original rotar a la derecha
-                validacData[i] = rotacionIzq(validacData[i], j);
-            }
-
-            enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
-
-            int n_pixels2=0;
-
-            unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
-
-            if (n_pixels2!=n_pixels1){
-
-                //cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-                validacion=false;
-            }
-
-            else{
-
-                for (int k = 0; k < n_pixels2*3; k++) {
-
-                    if (validacionData[k]!=maskingData1[k]){
-                        validacion=false;
-
-                        break;
-
-                    }
-
-                    else{
-
-                        validacion=true;
+                        // Revertir la rotación que no era correcta
+                        validacData[i] = rotacionDer(validacData[i], j);
 
                     }
 
                 }
 
+                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
 
             }
 
             if (validacion==true){
-
-                cout<<endl<<"Es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
                 break;
-
             }
 
-            else{
+            if (validacionData != nullptr){
+                delete[] validacionData;
+                validacionData = nullptr;
+            }
 
-                //cout<<endl<<"No es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+
+
+            /* ******************************************** Rotación a la iquierda ********************************************* */
+
+
+
+            for (int j=1;j<9;j++){
 
                 for (int i = 0; i < totalSize; i++) {
 
-                    // Revertir la rotación que no era correcta
+                    // Original rotar a la izquierda
                     validacData[i] = rotacionDer(validacData[i], j);
 
                 }
 
-            }
+                enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
 
-            //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+                int n_pixels2=0;
 
-        }
+                unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
 
-        if (validacion==true){
-            break;
-        }
+                if (n_pixels2!=n_pixels1){
 
-        if (validacionData != nullptr){
-            delete[] validacionData;
-            validacionData = nullptr;
-        }
+                    //cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    validacion=false;
+                }
 
+                else{
 
+                    for (int k = 0; k < n_pixels2*3; k++) {
 
+                        if (validacionData[k]!=maskingData1[k]){
+                            validacion=false;
 
-        /* ******************************************** Rotación a la iquierda ********************************************* */
+                            break;
 
+                        }
 
+                        else{
 
-        for (int j=1;j<9;j++){
+                            validacion=true;
 
-            for (int i = 0; i < totalSize; i++) {
-
-                // Original rotar a la izquierda
-                validacData[i] = rotacionDer(validacData[i], j);
-
-            }
-
-            enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
-
-            int n_pixels2=0;
-
-            unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
-
-            if (n_pixels2!=n_pixels1){
-
-                //cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-                validacion=false;
-            }
-
-            else{
-
-                for (int k = 0; k < n_pixels2*3; k++) {
-
-                    if (validacionData[k]!=maskingData1[k]){
-                        validacion=false;
-
-                        break;
-
-                    }
-
-                    else{
-
-                        validacion=true;
+                        }
 
                     }
 
                 }
+
+                if (validacion==true){
+
+                    cout<<endl<<"Es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    //cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    for (int i = 0; i < totalSize; i++) {
+
+                        // Revertir la rotación que no era correcta
+                        validacData[i] = rotacionIzq(validacData[i], j);
+
+                    }
+
+
+
+                }
+
+                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
 
             }
 
             if (validacion==true){
-
-                cout<<endl<<"Es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
                 break;
-
             }
 
-            else{
+            if (validacionData != nullptr){
+                delete[] validacionData;
+                validacionData = nullptr;
+            }
 
-                //cout<<endl<<"No es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+
+
+
+            /* *************************************** Desplazamiento a la derecha ************************************** */
+
+
+
+
+            for (int j=1;j<9;j++){
 
                 for (int i = 0; i < totalSize; i++) {
 
-                    // Revertir la rotación que no era correcta
-                    validacData[i] = rotacionIzq(validacData[i], j);
-
-                }
-
-
-
-            }
-
-            //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
-
-        }
-
-        if (validacion==true){
-            break;
-        }
-
-        if (validacionData != nullptr){
-            delete[] validacionData;
-            validacionData = nullptr;
-        }
-
-
-
-
-
-        /* *************************************** Desplazamiento a la derecha ************************************** */
-
-
-
-
-        for (int j=1;j<9;j++){
-
-            for (int i = 0; i < totalSize; i++) {
-
-                // Original desplazar a la derecha
-                validacData[i] = desplazamientoIzq(validacData[i], j);
-
-            }
-
-            enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
-
-            int n_pixels2=0;
-
-            unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
-
-            if (n_pixels2!=n_pixels1){
-
-                //cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-                validacion=false;
-            }
-
-            else{
-
-                for (int k = 0; k < n_pixels2*3; k++) {
-
-                    if (validacionData[k]!=maskingData1[k]){
-                        validacion=false;
-
-                        break;
-
-                    }
-
-                    else{
-
-                        validacion=true;
-
-                    }
-
-                }
-
-            }
-
-            if (validacion==true){
-
-                cout<<endl<<"Es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
-                break;
-
-            }
-
-            else{
-
-                //cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
-                for (int i = 0; i < totalSize; i++) {
-
-                    // Revertir operación incorrecta
-                    validacData[i] = desplazamientoDer(validacData[i], j);
-
-                }
-
-            }
-
-            //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
-
-        }
-
-        if (validacion==true){
-            break;
-        }
-
-        if (validacionData != nullptr){
-            delete[] validacionData;
-            validacionData = nullptr;
-        }
-
-
-
-
-
-        /* **************************************** Desplazamiento a la iquierda ************************************** */
-
-
-
-
-        for (int j=1;j<9;j++){
-
-            for (int i = 0; i < totalSize; i++) {
-
-                // Original desplazar a la izquierda
-                validacData[i] = desplazamientoDer(validacData[i], j);
-
-            }
-
-            enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
-
-            int n_pixels2=0;
-
-            unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
-
-            if (n_pixels2!=n_pixels1){
-
-                //cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-                validacion=false;
-            }
-
-            else{
-
-                for (int k = 0; k < n_pixels2*3; k++) {
-
-                    if (validacionData[k]!=maskingData1[k]){
-                        validacion=false;
-
-                        break;
-
-                    }
-
-                    else{
-
-                        validacion=true;
-
-                    }
-
-                }
-
-            }
-
-            if (validacion==true){
-
-                cout<<endl<<"Es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
-                break;
-
-            }
-
-            else{
-
-                //cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
-
-                for (int i = 0; i < totalSize; i++) {
-
-                    // Revertir operación incorrecta
+                    // Original desplazar a la derecha
                     validacData[i] = desplazamientoIzq(validacData[i], j);
 
                 }
 
+                enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
+
+                int n_pixels2=0;
+
+                unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
+
+                if (n_pixels2!=n_pixels1){
+
+                    //cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    validacion=false;
+                }
+
+                else{
+
+                    for (int k = 0; k < n_pixels2*3; k++) {
+
+                        if (validacionData[k]!=maskingData1[k]){
+                            validacion=false;
+
+                            break;
+
+                        }
+
+                        else{
+
+                            validacion=true;
+
+                        }
+
+                    }
+
+                }
+
+                if (validacion==true){
+
+                    cout<<endl<<"Es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    //cout<<endl<<"No es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    for (int i = 0; i < totalSize; i++) {
+
+                        // Revertir operación incorrecta
+                        validacData[i] = desplazamientoDer(validacData[i], j);
+
+                    }
+
+                }
+
+                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
             }
 
-            //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+            if (validacion==true){
+                break;
+            }
 
-        }
+            if (validacionData != nullptr){
+                delete[] validacionData;
+                validacionData = nullptr;
+            }
 
-        if (validacion==true){
-            break;
-        }
 
-        if (validacionData != nullptr){
-            delete[] validacionData;
-            validacionData = nullptr;
-        }
+
+
+
+            /* **************************************** Desplazamiento a la iquierda ************************************** */
+
+
+
+
+            for (int j=1;j<9;j++){
+
+                for (int i = 0; i < totalSize; i++) {
+
+                    // Original desplazar a la izquierda
+                    validacData[i] = desplazamientoDer(validacData[i], j);
+
+                }
+
+                enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
+
+                int n_pixels2=0;
+
+                unsigned int *validacionData = loadSeedMasking("Validacion.txt", seed1, n_pixels2);
+
+                if (n_pixels2!=n_pixels1){
+
+                    //cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    validacion=false;
+                }
+
+                else{
+
+                    for (int k = 0; k < n_pixels2*3; k++) {
+
+                        if (validacionData[k]!=maskingData1[k]){
+                            validacion=false;
+
+                            break;
+
+                        }
+
+                        else{
+
+                            validacion=true;
+
+                        }
+
+                    }
+
+                }
+
+                if (validacion==true){
+
+                    cout<<endl<<"Es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    break;
+
+                }
+
+                else{
+
+                    //cout<<endl<<"No es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+
+                    for (int i = 0; i < totalSize; i++) {
+
+                        // Revertir operación incorrecta
+                        validacData[i] = desplazamientoIzq(validacData[i], j);
+
+                    }
+
+                }
+
+                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+
+            }
+
+            if (validacion==true){
+                break;
+            }
+
+            if (validacionData != nullptr){
+                delete[] validacionData;
+                validacionData = nullptr;
+            }
 
         }
 
@@ -566,12 +577,13 @@ int main()
 
         }
 
-        // Limpiar memoria dinámica
+        else{
 
-        if (maskingData != nullptr){
-            delete[] maskingData;
-            maskingData = nullptr;
+            exportImage(validacData, width, height, archivosSalidaBMP[etapa-1]);
+
         }
+
+        // Limpiar memoria dinámica
 
         if (maskingData1 != nullptr){
             delete[] maskingData1;
@@ -584,9 +596,8 @@ int main()
         delete [] validacData;
         validacData = nullptr;
 
-        delete [] original;
 
-    }
+    } // Fin del for
 
     // Limpiar memoria dinámica
 
