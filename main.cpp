@@ -48,9 +48,15 @@ void enmascaramiento(unsigned char* Id, int wId, int hId, unsigned char* M, int 
 
 int main()
 {
+    int n=0;
+
+    cout<<endl<<"Bienvenido, carga la imagen distorsionda I_D.bmp, junto con la imagen para las operaciones XOR I_M.bmp y la imagen mascara M.bmp."<<endl;
+    cout<<endl<<"Carga los archivos con el resultado del enmascaramiento, de acuerdo con ello, ingresa el numero de etapas del proceso: ";
+    cin>>n;
+
     // Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
 
-    QString archivosEntradaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","I_D"};
+    QString archivosEntradaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","I_D.bmp"};
     QString archivosSalidaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","Etapa7.bmp"};
     const char* archivosTXT [7]={"M0.txt","M1.txt","M2.txt","M3.txt","M4.txt","M5.txt","M6.txt"};
     QString Imascara = "I_M.bmp";
@@ -70,8 +76,10 @@ int main()
     // Carga la máscara BMP en memoria dinámica y obtiene ancho y alto
     unsigned char *maskData = loadPixels(mascara, wm, hm);
 
+    cout<<endl;
+    cout<<"Las tranformaciones realizadas fueron las siguiente: "<<endl;
 
-    for (int etapa=6;etapa>=0;etapa--){
+    for (int etapa=n-1;etapa>=0;etapa--){
 
         // Variables para almacenar las dimensiones de la imagen
         int height = 0;
@@ -87,7 +95,7 @@ int main()
             return -1; //convención para indicar que hay un error
         }
 
-        if (etapa!=6){
+        if (etapa!=n-1){
 
             // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
             int seed = 0;
@@ -201,7 +209,7 @@ int main()
 
             if (validacion==true){
 
-                cout<<endl<<"Es operacion XOR en etapa: "<<etapa+1<<endl;
+                cout<<endl<<"Operacion XOR con la imagen I_M en la etapa: "<<etapa+1<<endl;
                 break;
 
             }
@@ -275,7 +283,7 @@ int main()
 
                 if (validacion==true){
 
-                    cout<<endl<<"Es operacion rotacion a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    cout<<endl<<"Rotacion a la derecha de "<<j<<" bits en la etapa: "<<etapa+1<<endl;
 
                     break;
 
@@ -358,7 +366,7 @@ int main()
 
                 if (validacion==true){
 
-                    cout<<endl<<"Es operacion rotacion a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    cout<<endl<<"Rotacion a la izquierda de "<<j<<" bits en la etapa: "<<etapa+1<<endl;
 
                     break;
 
@@ -445,7 +453,7 @@ int main()
 
                 if (validacion==true){
 
-                    cout<<endl<<"Es operacion desplazamiento a la derecha de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    cout<<endl<<"Desplazamiento a la derecha de "<<j<<" bits en la etapa: "<<etapa+1<<endl;
 
                     break;
 
@@ -530,7 +538,7 @@ int main()
 
                 if (validacion==true){
 
-                    cout<<endl<<"Es operacion desplazamiento a la izquierda de "<<j<<"bits en la etapa: "<<etapa+1<<endl;
+                    cout<<endl<<"Desplazamiento a la izquierda de "<<j<<" bits en la etapa: "<<etapa+1<<endl;
 
                     break;
 
@@ -569,7 +577,7 @@ int main()
         if (etapa==0){
 
             // Exporta la imagen modificada a un nuevo archivo BMP
-            bool exportFinal = exportImage(validacData, width, height, "Final.bmp");
+            exportImage(validacData, width, height, "Final.bmp");
 
             // Muestra si la exportación fue exitosa (true o false)
             //cout << exportFinal << endl;
@@ -598,6 +606,8 @@ int main()
 
 
     } // Fin del for
+
+    cout<<endl;
 
     // Limpiar memoria dinámica
 
