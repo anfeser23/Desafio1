@@ -55,7 +55,6 @@ int main()
     cin>>n;
 
     // Definición de rutas de archivo de entrada (imagen original), salida (imagen modificada), de la imagen máscara y de la máscara
-
     QString archivosEntradaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","I_D.bmp"};
     QString archivosSalidaBMP [7]={"Etapa1.bmp","Etapa2.bmp","Etapa3.bmp","Etapa4.bmp","Etapa5.bmp","Etapa6.bmp","Etapa7.bmp"};
     const char* archivosTXT [7]={"M0.txt","M1.txt","M2.txt","M3.txt","M4.txt","M5.txt","M6.txt"};
@@ -63,7 +62,6 @@ int main()
     QString mascara = "M.bmp";
 
     // Variables para almacenar las dimensiones de la imagen máscara y de la máscara
-
     int hIm=0;
     int wIm=0;
 
@@ -86,14 +84,13 @@ int main()
         int width = 0;
 
         // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
-        //unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
         unsigned char *pixelData = loadPixels(archivosEntradaBMP[etapa], width, height);
 
-        // Asegurarse que las dimensiones coincidan
+        /* Asegurarse que las dimensiones coincidan
         if (width != wIm || height != hIm) {
             cout << "Las imagenes no tienen el mismo tamaño." << endl;
             return -1; //convención para indicar que hay un error
-        }
+        }*/
 
         if (etapa!=n-1){
 
@@ -129,20 +126,13 @@ int main()
         }
 
         // Exporta la imagen modificada a un nuevo archivo BMP
-        exportImage(pixelData, width, height, archivosSalidaBMP[etapa]);
-
-        // Muestra si la exportación fue exitosa (true o false)
-        //cout << exportI << endl;
-
-        //QString archivodeSalida = "Etapa6.bmp";
+        exportImage(pixelData, width, height, archivosSalidaBMP[etapa]);        
 
         // Variables para almacenar las dimensiones de la imagen sin la máscara
-
         int hvalidacion = 0;
         int wvalidacion = 0;
 
         // Carga la imagen sin máscara BMP en memoria dinámica y obtiene ancho y alto
-
         unsigned char *validacData = loadPixels(archivosSalidaBMP[etapa], wvalidacion, hvalidacion);
 
         int totalSize = width*height*3;
@@ -158,11 +148,7 @@ int main()
 
         do{
 
-
-
             /* *************************************** Operación XOR *************************************** */
-
-
 
 
             for (int i = 0; i < totalSize; i++) {
@@ -180,9 +166,13 @@ int main()
 
             if (n_pixels2!=n_pixels1){
 
-                //cout<<endl<<"No es operacion XOR en etapa: "<<etapa+1<<endl;
+                // Limpiar memoria dinámica
+                if (validacionData != nullptr){
+                    delete[] validacionData;
+                    validacionData = nullptr;
+                }
+
                 break;
-                validacion=false;
             }
 
             else{
@@ -191,18 +181,20 @@ int main()
 
                     if (validacionData[k]!=maskingData1[k]){
                         validacion=false;
-
                         break;
-
                     }
 
                     else{
-
                         validacion=true;
-
 
                     }
 
+                }
+
+                // Limpiar memoria dinámica
+                if (validacionData != nullptr){
+                    delete[] validacionData;
+                    validacionData = nullptr;
                 }
 
             }
@@ -225,18 +217,10 @@ int main()
 
                 }
 
-            }
-
-            if (validacionData != nullptr){
-                delete[] validacionData;
-                validacionData = nullptr;
-            }
-
-
+            }            
 
 
             /* ********************************************** Rotación a la derecha ********************************************* */
-
 
 
             for (int j=1;j<9;j++){
@@ -245,6 +229,7 @@ int main()
 
                     // Original rotar a la derecha
                     validacData[i] = rotacionIzq(validacData[i], j);
+
                 }
 
                 enmascaramiento(validacData, wvalidacion, hvalidacion, maskData, wm,hm,seed1);
@@ -265,19 +250,20 @@ int main()
 
                         if (validacionData[k]!=maskingData1[k]){
                             validacion=false;
-
                             break;
-
                         }
 
                         else{
-
                             validacion=true;
-
                         }
 
                     }
 
+                    // Limpiar memoria dinámica
+                    if (validacionData != nullptr){
+                        delete[] validacionData;
+                        validacionData = nullptr;
+                    }
 
                 }
 
@@ -300,9 +286,7 @@ int main()
 
                     }
 
-                }
-
-                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+                }               
 
             }
 
@@ -310,16 +294,8 @@ int main()
                 break;
             }
 
-            if (validacionData != nullptr){
-                delete[] validacionData;
-                validacionData = nullptr;
-            }
-
-
-
 
             /* ******************************************** Rotación a la iquierda ********************************************* */
-
 
 
             for (int j=1;j<9;j++){
@@ -349,17 +325,19 @@ int main()
 
                         if (validacionData[k]!=maskingData1[k]){
                             validacion=false;
-
                             break;
-
                         }
 
                         else{
-
                             validacion=true;
-
                         }
 
+                    }
+
+                    // Limpiar memoria dinámica
+                    if (validacionData != nullptr){
+                        delete[] validacionData;
+                        validacionData = nullptr;
                     }
 
                 }
@@ -383,30 +361,16 @@ int main()
 
                     }
 
-
-
-                }
-
-                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+                }                
 
             }
 
             if (validacion==true){
                 break;
-            }
-
-            if (validacionData != nullptr){
-                delete[] validacionData;
-                validacionData = nullptr;
-            }
-
-
-
+            }           
 
 
             /* *************************************** Desplazamiento a la derecha ************************************** */
-
-
 
 
             for (int j=1;j<9;j++){
@@ -436,17 +400,19 @@ int main()
 
                         if (validacionData[k]!=maskingData1[k]){
                             validacion=false;
-
                             break;
-
                         }
 
                         else{
-
                             validacion=true;
-
                         }
 
+                    }
+
+                    // Limpiar memoria dinámica
+                    if (validacionData != nullptr){
+                        delete[] validacionData;
+                        validacionData = nullptr;
                     }
 
                 }
@@ -470,28 +436,16 @@ int main()
 
                     }
 
-                }
-
-                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
+                }                
 
             }
 
             if (validacion==true){
                 break;
-            }
-
-            if (validacionData != nullptr){
-                delete[] validacionData;
-                validacionData = nullptr;
-            }
-
-
-
+            }            
 
 
             /* **************************************** Desplazamiento a la iquierda ************************************** */
-
-
 
 
             for (int j=1;j<9;j++){
@@ -521,17 +475,19 @@ int main()
 
                         if (validacionData[k]!=maskingData1[k]){
                             validacion=false;
-
                             break;
-
                         }
 
                         else{
-
                             validacion=true;
-
                         }
 
+                    }
+
+                    // Limpiar memoria dinámica
+                    if (validacionData != nullptr){
+                        delete[] validacionData;
+                        validacionData = nullptr;
                     }
 
                 }
@@ -557,22 +513,15 @@ int main()
 
                 }
 
-                //cout<<endl<<"Bandera con j"<<j<<" "<<validacion<<endl;
-
             }
 
             if (validacion==true){
                 break;
-            }
-
-            if (validacionData != nullptr){
-                delete[] validacionData;
-                validacionData = nullptr;
-            }
+            }           
 
         }
 
-        while(validacion==false);
+        while(validacion==false);              
 
         if (etapa==0){
 
@@ -613,6 +562,7 @@ int main()
 
     delete [] maskData;
     maskData = nullptr;
+
     delete [] ImaskData;
     ImaskData = nullptr;
 
@@ -834,8 +784,12 @@ unsigned char operacionXor(unsigned char Id, unsigned char IM){
 
 unsigned char* revertirEnmas(unsigned int* sumaRGB, unsigned char* M, int i, int j){
 
-    unsigned char* original = new unsigned char[i*j*3];
+    if (i<=0 || j<=0){
+        return nullptr;
+    }
 
+
+    unsigned char* original = new unsigned char[i*j*3];
 
     for (int k=0;k<(i*j*3);k++){
 
